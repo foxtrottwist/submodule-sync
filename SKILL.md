@@ -22,6 +22,7 @@ Run `scripts/sync.sh` from repo root:
 | `commit` | Interactive commit across submodules with changes |
 | `push` | Push all submodules with unpushed commits |
 | `add` | Add a new submodule (prompts for URL and path) |
+| `finalize` | Commit and push parent repo with submodule updates |
 
 ## Workflow: Committing Changes
 
@@ -30,8 +31,7 @@ When changes exist across multiple submodules:
 1. **Check status**: `./skills/submodule-sync/scripts/sync.sh status`
 2. **Commit in submodules**: `./skills/submodule-sync/scripts/sync.sh commit`
 3. **Push submodules**: `./skills/submodule-sync/scripts/sync.sh push`
-4. **Update parent**: `git add <changed-submodules> && git commit -m "update submodules"`
-5. **Push parent**: `git push`
+4. **Finalize parent**: `./skills/submodule-sync/scripts/sync.sh finalize`
 
 ## Manual Operations
 
