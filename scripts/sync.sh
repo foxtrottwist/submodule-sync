@@ -15,7 +15,7 @@ usage() {
     echo "  commit    Interactive commit across changed submodules"
     echo "  push      Push all submodules with unpushed commits"
     echo "  add       Add a new submodule (prompts for details)"
-    echo "  finalize  Commit and push parent repo with submodule updates"
+    echo "  finalize [msg]  Commit and push parent repo (optional message for non-interactive)"
     exit 1
 }
 
@@ -117,6 +117,7 @@ add_submodule() {
 }
 
 finalize_parent() {
+    local provided_msg="$1"
     echo "=== Finalize Parent Repo ==="
 
     # Check for submodule changes
@@ -129,10 +130,16 @@ finalize_parent() {
         # Check if ahead of remote
         ahead=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo "0")
         if [ "$ahead" -gt 0 ]; then
-            read -p "Parent has $ahead unpushed commits. Push now? [y/N] " push_confirm
-            if [ "$push_confirm" = "y" ] || [ "$push_confirm" = "Y" ]; then
+            if [ -n "$provided_msg" ]; then
+                # Non-interactive: auto-push
                 git push
-                echo "Pushed."
+                echo "Pushed $ahead commits."
+            else
+                read -p "Parent has $ahead unpushed commits. Push now? [y/N] " push_confirm
+                if [ "$push_confirm" = "y" ] || [ "$push_confirm" = "Y" ]; then
+                    git push
+                    echo "Pushed."
+                fi
             fi
         fi
         return
@@ -147,8 +154,13 @@ finalize_parent() {
     all_changed=$(echo -e "$changed\n$staged" | sort -u | xargs -n1 basename 2>/dev/null | paste -sd, -)
     default_msg="chore: update submodules ($all_changed)"
 
-    read -p "Commit message [$default_msg]: " msg
-    msg="${msg:-$default_msg}"
+    if [ -n "$provided_msg" ]; then
+        # Non-interactive mode
+        msg="$provided_msg"
+    else
+        read -p "Commit message [$default_msg]: " msg
+        msg="${msg:-$default_msg}"
+    fi
 
     # Stage submodule changes
     [ -n "$changed" ] && echo "$changed" | xargs git add
@@ -156,10 +168,16 @@ finalize_parent() {
     git commit -m "$msg"
     echo "Committed."
 
-    read -p "Push to remote? [Y/n] " push_confirm
-    if [ "$push_confirm" != "n" ] && [ "$push_confirm" != "N" ]; then
+    if [ -n "$provided_msg" ]; then
+        # Non-interactive: auto-push
         git push
         echo "Pushed."
+    else
+        read -p "Push to remote? [Y/n] " push_confirm
+        if [ "$push_confirm" != "n" ] && [ "$push_confirm" != "N" ]; then
+            git push
+            echo "Pushed."
+        fi
     fi
 }
 
@@ -169,6 +187,6 @@ case "${1:-}" in
     commit) commit_changed ;;
     push) push_all ;;
     add) add_submodule ;;
-    finalize) finalize_parent ;;
+    finalize) finalize_parent "$2" ;;
     *) usage ;;
 esac

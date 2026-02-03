@@ -22,7 +22,7 @@ Run `scripts/sync.sh` from repo root:
 | `commit` | Interactive commit across submodules with changes |
 | `push` | Push all submodules with unpushed commits |
 | `add` | Add a new submodule (prompts for URL and path) |
-| `finalize` | Commit and push parent repo with submodule updates |
+| `finalize [msg]` | Commit and push parent repo (pass message for non-interactive) |
 
 ## Workflow: Committing Changes
 
