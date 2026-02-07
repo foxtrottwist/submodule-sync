@@ -15,24 +15,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
+      - name: Validate skill
+        run: |
+          chmod +x .githooks/validate-skill.sh
+          .githooks/validate-skill.sh
+
+      - name: Shellcheck
+        if: hashFiles('scripts/*.sh') != ''
+        run: |
+          sudo apt-get install -y shellcheck
+          shellcheck scripts/*.sh
+
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Package skill
         run: |
-          # Create distribution directory
+          SKILL_NAME=$(basename "$GITHUB_REPOSITORY")
           mkdir -p dist
 
-          # Create skill archive (README.md excluded per skill-creator guidelines)
-          zip -r "dist/submodule-sync-${{ steps.version.outputs.VERSION }}.skill" \
-            SKILL.md \
-            scripts/ \
+          # Build file list dynamically
+          FILES="SKILL.md"
+          [ -d "references" ] && FILES="$FILES references/"
+          [ -d "scripts" ] && FILES="$FILES scripts/"
+          [ -f "LICENSE" ] && FILES="$FILES LICENSE"
+
+          zip -r "dist/${SKILL_NAME}-${{ steps.version.outputs.VERSION }}.skill" \
+            $FILES \
             -x "*.DS_Store" \
-            -x "*/.git/*"
+            -x "*/.git/*" \
+            -x "scripts/quick_validate.py"
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*.skill
           generate_release_notes: true
