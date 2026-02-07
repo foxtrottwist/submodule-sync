@@ -101,7 +101,7 @@ else
   errors=$((errors + 1))
 fi
 
-# --- No .local artifacts ---
+# --- No .local artifacts tracked ---
 if [ "$MODE" = "hook" ]; then
   # Check staged files only
   local_staged=$(git diff --cached --name-only | grep -E '\.local(\.|$)' || true)
@@ -113,14 +113,14 @@ if [ "$MODE" = "hook" ]; then
     echo "  OK: no .local artifacts staged"
   fi
 else
-  # CI mode: check working tree
-  local_files=$(find . -name '*.local' -o -name '*.local.*' | grep -v node_modules | grep -v .git || true)
-  if [ -n "$local_files" ]; then
-    echo "  FAIL: .local artifacts in tree:"
-    echo "$local_files" | sed 's/^/    /'
+  # CI/manual mode: check for tracked .local files (untracked/gitignored ones are fine)
+  local_tracked=$(git ls-files | grep -E '\.local(\.|$)' || true)
+  if [ -n "$local_tracked" ]; then
+    echo "  FAIL: .local artifacts tracked by git:"
+    echo "$local_tracked" | sed 's/^/    /'
     errors=$((errors + 1))
   else
-    echo "  OK: no .local artifacts in tree"
+    echo "  OK: no .local artifacts tracked"
   fi
 fi
 
