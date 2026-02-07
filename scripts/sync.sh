@@ -14,7 +14,9 @@ usage() {
     echo "  update    Update all submodules to latest remote"
     echo "  commit    Interactive commit across changed submodules"
     echo "  push      Push all submodules with unpushed commits"
-    echo "  add       Add a new submodule (prompts for details)"
+    echo "  add       Add a new submodule (bootstraps skill template for skills/)"
+    echo "  validate  Run validate-skill.sh across all skill submodules"
+    echo "  init-hooks  Set core.hooksPath in all skill submodules"
     echo "  finalize [msg]  Commit and push parent repo (optional message for non-interactive)"
     exit 1
 }
@@ -113,7 +115,64 @@ add_submodule() {
     fi
 
     git submodule add "$url" "$path"
+
+    # Bootstrap skill template if adding to skills/
+    if [[ "$path" == skills/* ]] && [ -d "templates/skill-template" ]; then
+        echo ""
+        echo "Detected skill submodule. Bootstrapping from template..."
+        skill_name=$(basename "$path")
+
+        # Copy template files (skip SKILL.md, LICENSE, setup.sh — repo should have its own)
+        cp -r templates/skill-template/.githooks "$path/.githooks"
+        cp -r templates/skill-template/.github "$path/.github"
+        mkdir -p "$path/scripts"
+        cp templates/skill-template/scripts/quick_validate.py "$path/scripts/quick_validate.py"
+        cp templates/skill-template/.gitignore "$path/.gitignore"
+
+        # Set hooks path
+        git -C "$path" config core.hooksPath .githooks
+
+        echo "Copied: .githooks/, .github/workflows/, scripts/quick_validate.py, .gitignore"
+        echo "Set core.hooksPath to .githooks"
+        echo ""
+        echo "Next: edit $path/SKILL.md, then commit in submodule."
+    fi
+
     echo "Added. Run '$0 finalize' to commit and push parent."
+}
+
+validate_skills() {
+    echo "=== Validating Skills ==="
+    echo ""
+    errors=0
+    total=0
+
+    for skill_dir in skills/*/; do
+        [ -f "$skill_dir/.githooks/validate-skill.sh" ] || continue
+        total=$((total + 1))
+        skill_name=$(basename "$skill_dir")
+        echo "--- $skill_name ---"
+        if "$skill_dir/.githooks/validate-skill.sh"; then
+            echo ""
+        else
+            errors=$((errors + 1))
+            echo ""
+        fi
+    done
+
+    echo "=== $((total - errors))/$total skills passed ==="
+    [ "$errors" -eq 0 ] || exit 1
+}
+
+init_hooks() {
+    echo "=== Setting core.hooksPath ==="
+    for skill_dir in skills/*/; do
+        [ -d "$skill_dir/.githooks" ] || continue
+        skill_name=$(basename "$skill_dir")
+        git -C "$skill_dir" config core.hooksPath .githooks
+        echo "  OK: $skill_name"
+    done
+    echo "Done."
 }
 
 finalize_parent() {
@@ -187,6 +246,8 @@ case "${1:-}" in
     commit) commit_changed ;;
     push) push_all ;;
     add) add_submodule ;;
+    validate) validate_skills ;;
+    init-hooks) init_hooks ;;
     finalize) finalize_parent "$2" ;;
     *) usage ;;
 esac

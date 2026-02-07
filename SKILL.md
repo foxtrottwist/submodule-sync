@@ -21,7 +21,9 @@ Run `scripts/sync.sh` from repo root:
 | `update` | Pull latest from all submodule remotes |
 | `commit` | Interactive commit across submodules with changes |
 | `push` | Push all submodules with unpushed commits |
-| `add` | Add a new submodule (prompts for URL and path) |
+| `add` | Add a new submodule (bootstraps skill template for skills/ paths) |
+| `validate` | Run validate-skill.sh across all skill submodules |
+| `init-hooks` | Set core.hooksPath in all skill submodules (for fresh clones) |
 | `finalize [msg]` | Commit and push parent repo (pass message for non-interactive) |
 
 ## Workflow: Committing Changes
