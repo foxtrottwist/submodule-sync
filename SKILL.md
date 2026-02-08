@@ -5,7 +5,7 @@ description: Manage git submodules in the Workflow Systems monorepo. Use when us
 
 # Submodule Sync
 
-Manage submodules across skills/, sites/, and external/ directories.
+Manage submodules across skills/, sites/, external/, configs/, plugins/, and mcp-servers/ directories.
 
 ## Commands
 

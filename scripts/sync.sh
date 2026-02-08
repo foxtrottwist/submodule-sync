@@ -180,8 +180,8 @@ finalize_parent() {
     echo "=== Finalize Parent Repo ==="
 
     # Check for submodule changes
-    changed=$(git diff --name-only | grep -E '^(skills|sites|external)/' || true)
-    staged=$(git diff --cached --name-only | grep -E '^(skills|sites|external)/' || true)
+    changed=$(git diff --name-only | grep -E '^(skills|sites|external|configs|plugins|mcp-servers)/' || true)
+    staged=$(git diff --cached --name-only | grep -E '^(skills|sites|external|configs|plugins|mcp-servers)/' || true)
 
     if [ -z "$changed" ] && [ -z "$staged" ]; then
         echo "No submodule changes to commit."
