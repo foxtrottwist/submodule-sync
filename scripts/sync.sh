@@ -24,6 +24,7 @@ usage() {
 status_all() {
     echo "=== Submodule Status ==="
     echo ""
+    # shellcheck disable=SC2016
     git submodule foreach --quiet '
         name=$(basename "$sm_path")
         changes=$(git status --porcelain | wc -l | tr -d " ")
@@ -57,6 +58,7 @@ update_all() {
 commit_changed() {
     echo "=== Committing Changed Submodules ==="
 
+    # shellcheck disable=SC2016
     changed=$(git submodule foreach --quiet '
         if [ -n "$(git status --porcelain)" ]; then
             echo "$sm_path"
@@ -77,7 +79,7 @@ commit_changed() {
         cd "$REPO_ROOT/$path"
         git status --short
         echo ""
-        read -p "Commit message (or 'skip'): " msg
+        read -rp "Commit message (or 'skip'): " msg
         if [ "$msg" != "skip" ] && [ -n "$msg" ]; then
             git add -A
             git commit -m "$msg"
@@ -94,6 +96,7 @@ commit_changed() {
 
 push_all() {
     echo "=== Pushing Submodules ==="
+    # shellcheck disable=SC2016
     git submodule foreach --quiet '
         ahead=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo "0")
         if [ "$ahead" -gt 0 ]; then
@@ -106,8 +109,8 @@ push_all() {
 
 add_submodule() {
     echo "=== Add New Submodule ==="
-    read -p "Git URL: " url
-    read -p "Local path (e.g., skills/new-skill): " path
+    read -rp "Git URL: " url
+    read -rp "Local path (e.g., skills/new-skill): " path
 
     if [ -z "$url" ] || [ -z "$path" ]; then
         echo "URL and path required."
@@ -187,14 +190,14 @@ finalize_parent() {
         echo "No submodule changes to commit."
 
         # Check if ahead of remote
-        ahead=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo "0")
+        ahead=$(git rev-list --count '@{u}..HEAD' 2>/dev/null || echo "0")
         if [ "$ahead" -gt 0 ]; then
             if [ -n "$provided_msg" ]; then
                 # Non-interactive: auto-push
                 git push
                 echo "Pushed $ahead commits."
             else
-                read -p "Parent has $ahead unpushed commits. Push now? [y/N] " push_confirm
+                read -rp "Parent has $ahead unpushed commits. Push now? [y/N] " push_confirm
                 if [ "$push_confirm" = "y" ] || [ "$push_confirm" = "Y" ]; then
                     git push
                     echo "Pushed."
@@ -217,7 +220,7 @@ finalize_parent() {
         # Non-interactive mode
         msg="$provided_msg"
     else
-        read -p "Commit message [$default_msg]: " msg
+        read -rp "Commit message [$default_msg]: " msg
         msg="${msg:-$default_msg}"
     fi
 
@@ -232,7 +235,7 @@ finalize_parent() {
         git push
         echo "Pushed."
     else
-        read -p "Push to remote? [Y/n] " push_confirm
+        read -rp "Push to remote? [Y/n] " push_confirm
         if [ "$push_confirm" != "n" ] && [ "$push_confirm" != "N" ]; then
             git push
             echo "Pushed."
